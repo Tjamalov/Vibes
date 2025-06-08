@@ -5,6 +5,9 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // Инициализация Supabase клиента
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
+// Конфигурация Mapbox
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiY3Jlb2dlbmthcnVzIiwiYSI6ImNtOTg4b242YjAwZHIyanF1MXkxZnVqcHoifQ.0_NhUoQVTA8zGEUUVOqcLw'
+
 // Конфигурация приложения
 const config = {
     // Настройки для работы с местами
@@ -14,7 +17,7 @@ const config = {
         fields: {
             name: 'name',
             review: 'revew',
-            photo: 'placephoto',
+            placephotos: 'placephotos',
             vibe: 'vibe',
             type: 'type',
             location: 'countrycity',

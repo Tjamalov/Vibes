@@ -2,6 +2,54 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
 
+// Инициализация компонентов
+const placeDetails = new PlaceDetails();
+
+// Хранилище геолокации
+let userLocation = null;
+
+// Функция для получения геолокации
+async function getUserLocation() {
+    try {
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        
+        userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+        };
+        
+        // Перезагружаем места с учетом новой геолокации
+        loadPlaces();
+        
+        return userLocation;
+    } catch (error) {
+        console.error('Error getting location:', error);
+        alert('Не удалось получить геолокацию. Пожалуйста, проверьте настройки разрешений.');
+        return null;
+    }
+}
+
+// Функция для расчета расстояния между двумя точками
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Радиус Земли в км
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// Обработчик клика по кнопке геолокации
+document.getElementById('geoButton').addEventListener('click', getUserLocation);
+
+// Инициализация Mapbox
+mapboxgl.accessToken = MAPBOX_TOKEN;
+
 // Управление навигацией
 document.querySelectorAll('.nav-item').forEach(button => {
     button.addEventListener('click', () => {
@@ -26,9 +74,32 @@ async function loadPlaces() {
             
         if (error) throw error;
         
+        console.log('Loaded places:', data);
+        console.log('First place example:', data[0]);
+        console.log('Photo field name:', config.places.fields.placephotos);
+        
+        // Сортируем места по расстоянию, если есть геолокация
+        if (userLocation) {
+            data.sort((a, b) => {
+                const distA = calculateDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    a.location.coordinates[1],
+                    a.location.coordinates[0]
+                );
+                const distB = calculateDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    b.location.coordinates[1],
+                    b.location.coordinates[0]
+                );
+                return distA - distB;
+            });
+        }
+        
         const placesList = document.querySelector('.places-list');
-        placesList.innerHTML = data.map(place => `
-            <div class="place-card">
+        placesList.innerHTML = data.map((place, index) => `
+            <div class="place-card" data-place-index="${index}">
                 ${place[config.places.fields.photo] ? 
                     `<img src="${place[config.places.fields.photo]}" alt="${place[config.places.fields.name]}" class="place-photo">` 
                     : ''}
@@ -54,6 +125,14 @@ async function loadPlaces() {
                 </div>
             </div>
         `).join('');
+
+        // Добавляем обработчики клика
+        document.querySelectorAll('.place-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const index = parseInt(card.dataset.placeIndex);
+                placeDetails.show(data[index], userLocation);
+            });
+        });
     } catch (error) {
         console.error('Error loading places:', error);
         document.querySelector('.places-list').innerHTML = `

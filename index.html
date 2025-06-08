@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vibes</title>
     <link rel="stylesheet" href="styles/main.css">
+    <!-- Подключаем Mapbox -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <!-- Подключаем Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Подключаем Supabase -->
@@ -12,6 +15,9 @@
 </head>
 <body>
     <div class="app">
+        <!-- Кнопка геолокации -->
+        <button class="geo-button" id="geoButton">Гео</button>
+
         <!-- Навигация -->
         <nav class="nav">
             <button class="nav-item active" data-page="food">Еда</button>
@@ -45,11 +51,27 @@
                 </div>
             </section>
         </main>
+
+        <!-- Попап с деталями места -->
+        <div class="place-popup" id="placePopup">
+            <div class="popup-content">
+                <button class="popup-close">&times;</button>
+                <div class="popup-header">
+                    <h2 class="popup-title"></h2>
+                </div>
+                <div class="popup-body">
+                    <div class="popup-photo"></div>
+                    <div class="popup-info"></div>
+                    <div class="popup-description"></div>
+                    <div id="map" class="popup-map"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Скрипты -->
     <script src="js/config.js"></script>
-    <script src="js/db.js"></script>
+    <script src="js/placeDetails.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html> 
