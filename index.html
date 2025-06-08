@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibes</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <!-- Подключаем Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Подключаем Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Навигация -->
+        <nav class="nav">
+            <button class="nav-item active" data-page="food">Еда</button>
+            <button class="nav-item" data-page="routes">Маршруты</button>
+            <button class="nav-item" data-page="profile">Профиль</button>
+        </nav>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <!-- Страница Еда -->
+            <section id="food" class="page active">
+                <h1>Еда</h1>
+                <div class="places-list">
+                    <!-- Здесь будет список мест -->
+                </div>
+            </section>
+
+            <!-- Страница Маршруты -->
+            <section id="routes" class="page">
+                <h1>Маршруты</h1>
+                <div class="routes-container">
+                    <!-- Здесь будут маршруты -->
+                </div>
+            </section>
+
+            <!-- Страница Профиль -->
+            <section id="profile" class="page">
+                <h1>Профиль</h1>
+                <div class="profile-content">
+                    <!-- Здесь будет профиль -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Скрипты -->
+    <script src="js/config.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html> 
