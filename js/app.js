@@ -5,29 +5,51 @@ tg.expand();
 // Инициализация компонентов
 const placeDetails = new PlaceDetails();
 
-// Хранилище геолокации
+// Глобальные переменные
 let userLocation = null;
+let selectedVibe = null;
+let allPlaces = [];
 
 // Функция для получения геолокации
-async function getUserLocation() {
+async function getLocation() {
     try {
         const position = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject);
         });
-        
+
         userLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
         };
-        
-        // Перезагружаем места с учетом новой геолокации
-        loadPlaces();
-        
-        return userLocation;
+
+        // Если места уже загружены, просто обновляем сортировку и отображение
+        if (allPlaces.length > 0) {
+            // Сортируем места по расстоянию
+            allPlaces.sort((a, b) => {
+                const distA = calculateDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    a.location.coordinates[1],
+                    a.location.coordinates[0]
+                );
+                const distB = calculateDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    b.location.coordinates[1],
+                    b.location.coordinates[0]
+                );
+                return distA - distB;
+            });
+            
+            // Обновляем отображение с сохранением фильтрации
+            renderPlaces();
+        } else {
+            // Если места еще не загружены, загружаем их
+            await loadPlaces();
+        }
     } catch (error) {
         console.error('Error getting location:', error);
-        alert('Не удалось получить геолокацию. Пожалуйста, проверьте настройки разрешений.');
-        return null;
+        alert('Не удалось получить ваше местоположение. Пожалуйста, проверьте настройки геолокации.');
     }
 }
 
@@ -57,7 +79,7 @@ function formatDistance(meters) {
 }
 
 // Обработчик клика по кнопке геолокации
-document.getElementById('geoButton').addEventListener('click', getUserLocation);
+document.getElementById('geoButton').addEventListener('click', getLocation);
 
 // Инициализация Mapbox
 mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -88,9 +110,12 @@ async function loadPlaces() {
         console.log('Loaded places:', data);
         console.log('First place example:', data[0]);
         
+        // Сохраняем все места
+        allPlaces = data;
+        
         // Сортируем места по расстоянию, если есть геолокация
         if (userLocation) {
-            data.sort((a, b) => {
+            allPlaces.sort((a, b) => {
                 const distA = calculateDistance(
                     userLocation.lat,
                     userLocation.lng,
@@ -106,58 +131,51 @@ async function loadPlaces() {
                 return distA - distB;
             });
         }
+
+        // Получаем уникальные вайбы
+        const vibes = [...new Set(allPlaces.map(place => place[config.places.fields.vibe]).filter(Boolean))];
         
-        const placesList = document.querySelector('.places-list');
-        placesList.innerHTML = data.map((place, index) => {
-            // Рассчитываем расстояние, если есть геолокация
-            let distanceTag = '';
-            if (userLocation) {
-                const distance = calculateDistance(
-                    userLocation.lat,
-                    userLocation.lng,
-                    place.location.coordinates[1],
-                    place.location.coordinates[0]
-                );
-                distanceTag = `<span class="place-tag">${formatDistance(distance)}</span>`;
-            }
+        // Удаляем старый свитчбар, если он есть
+        const oldSwitch = document.querySelector('.vibes-switch');
+        if (oldSwitch) {
+            oldSwitch.remove();
+        }
+        
+        // Создаем свитчбар с вайбами
+        const vibesSwitch = document.createElement('div');
+        vibesSwitch.className = 'vibes-switch';
+        vibesSwitch.innerHTML = vibes.map(vibe => `
+            <button class="vibe-chip" data-vibe="${vibe}">${vibe}</button>
+        `).join('');
 
-            return `
-                <div class="place-card" data-place-index="${index}">
-                    ${place[config.places.fields.placephotos] ? 
-                        `<img src="${place[config.places.fields.placephotos]}" alt="${place[config.places.fields.name]}" class="place-photo">` 
-                        : ''}
-                    <div class="place-content">
-                        <h3 class="place-name">${place[config.places.fields.name]}</h3>
-                        <div class="place-info">
-                            ${place[config.places.fields.type] ? 
-                                `<span class="place-tag">${place[config.places.fields.type]}</span>` 
-                                : ''}
-                            ${place[config.places.fields.kitchen] ? 
-                                `<span class="place-tag">${place[config.places.fields.kitchen]}</span>` 
-                                : ''}
-                            ${place[config.places.fields.vibe] ? 
-                                `<span class="place-tag">${place[config.places.fields.vibe]}</span>` 
-                                : ''}
-                            ${place[config.places.fields.location] ? 
-                                `<span class="place-tag">${place[config.places.fields.location]}</span>` 
-                                : ''}
-                            ${distanceTag}
-                        </div>
-                        ${place[config.places.fields.review] ? 
-                            `<p class="place-review">${place[config.places.fields.review]}</p>` 
-                            : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // Добавляем обработчики клика
-        document.querySelectorAll('.place-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const index = parseInt(card.dataset.placeIndex);
-                placeDetails.show(data[index], userLocation);
+        // Добавляем обработчики для чипсов
+        vibesSwitch.querySelectorAll('.vibe-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const clickedVibe = chip.dataset.vibe;
+                
+                // Если кликнули по активному чипсу - деактивируем его
+                if (selectedVibe === clickedVibe) {
+                    chip.classList.remove('active');
+                    selectedVibe = null;
+                } else {
+                    // Деактивируем предыдущий чипс
+                    vibesSwitch.querySelectorAll('.vibe-chip').forEach(c => c.classList.remove('active'));
+                    // Активируем новый чипс
+                    chip.classList.add('active');
+                    selectedVibe = clickedVibe;
+                }
+                
+                // Обновляем отображение мест
+                renderPlaces();
             });
         });
+
+        // Вставляем свитчбар перед списком мест
+        const placesList = document.querySelector('.places-list');
+        placesList.parentNode.insertBefore(vibesSwitch, placesList);
+
+        // Отображаем места
+        renderPlaces();
     } catch (error) {
         console.error('Error loading places:', error);
         document.querySelector('.places-list').innerHTML = `
@@ -166,6 +184,67 @@ async function loadPlaces() {
             </div>
         `;
     }
+}
+
+// Функция для отображения мест с учетом фильтрации
+function renderPlaces() {
+    const placesList = document.querySelector('.places-list');
+    
+    // Фильтруем места по выбранному вайбу
+    const filteredPlaces = selectedVibe 
+        ? allPlaces.filter(place => place[config.places.fields.vibe] === selectedVibe)
+        : allPlaces;
+
+    placesList.innerHTML = filteredPlaces.map((place, index) => {
+        // Рассчитываем расстояние, если есть геолокация
+        let distanceTag = '';
+        if (userLocation) {
+            const distance = calculateDistance(
+                userLocation.lat,
+                userLocation.lng,
+                place.location.coordinates[1],
+                place.location.coordinates[0]
+            );
+            distanceTag = `<span class="place-tag">${formatDistance(distance)}</span>`;
+        }
+
+        return `
+            <div class="place-card" data-place-index="${allPlaces.indexOf(place)}">
+                ${place[config.places.fields.placephotos] ? 
+                    `<img src="${place[config.places.fields.placephotos]}" alt="${place[config.places.fields.name]}" class="place-photo">` 
+                    : ''}
+                <div class="place-content">
+                    <h3 class="place-name">${place[config.places.fields.name]}</h3>
+                    <div class="place-info">
+                        ${place[config.places.fields.type] ? 
+                            `<span class="place-tag">${place[config.places.fields.type]}</span>` 
+                            : ''}
+                        ${place[config.places.fields.kitchen] ? 
+                            `<span class="place-tag">${place[config.places.fields.kitchen]}</span>` 
+                            : ''}
+                        ${place[config.places.fields.vibe] ? 
+                            `<span class="place-tag" data-vibe>${place[config.places.fields.vibe]}</span>` 
+                            : ''}
+                        ${place[config.places.fields.location] ? 
+                            `<span class="place-tag">${place[config.places.fields.location]}</span>` 
+                            : ''}
+                        ${distanceTag}
+                    </div>
+                    ${place[config.places.fields.review] ? 
+                        `<p class="place-review">${place[config.places.fields.review]}</p>` 
+                        : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Добавляем обработчики клика
+    document.querySelectorAll('.place-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const index = parseInt(card.dataset.placeIndex);
+            placeDetails.show(allPlaces[index], userLocation);
+        });
+    });
 }
 
 // Функции для работы с маршрутами
