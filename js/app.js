@@ -31,17 +31,29 @@ async function getUserLocation() {
     }
 }
 
-// Функция для расчета расстояния между двумя точками
+// Функция для расчета расстояния между двумя точками в метрах
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Радиус Земли в км
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const R = 6371e3; // Радиус Земли в метрах
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
+
+    return Math.round(R * c); // Возвращаем расстояние в метрах, округленное до целого
+}
+
+// Функция для форматирования расстояния
+function formatDistance(meters) {
+    if (meters < 1000) {
+        return `${meters}м`;
+    } else {
+        return `${(meters/1000).toFixed(1)}км`;
+    }
 }
 
 // Обработчик клика по кнопке геолокации
@@ -69,14 +81,12 @@ async function loadPlaces() {
     try {
         const { data, error } = await supabaseClient
             .from(config.places.table)
-            .select('*')
-            .limit(config.places.limit);
+            .select('*');
             
         if (error) throw error;
         
         console.log('Loaded places:', data);
         console.log('First place example:', data[0]);
-        console.log('Photo field name:', config.places.fields.placephotos);
         
         // Сортируем места по расстоянию, если есть геолокация
         if (userLocation) {
@@ -98,33 +108,48 @@ async function loadPlaces() {
         }
         
         const placesList = document.querySelector('.places-list');
-        placesList.innerHTML = data.map((place, index) => `
-            <div class="place-card" data-place-index="${index}">
-                ${place[config.places.fields.photo] ? 
-                    `<img src="${place[config.places.fields.photo]}" alt="${place[config.places.fields.name]}" class="place-photo">` 
-                    : ''}
-                <div class="place-content">
-                    <h3 class="place-name">${place[config.places.fields.name]}</h3>
-                    <div class="place-info">
-                        ${place[config.places.fields.type] ? 
-                            `<span class="place-tag">${place[config.places.fields.type]}</span>` 
-                            : ''}
-                        ${place[config.places.fields.kitchen] ? 
-                            `<span class="place-tag">${place[config.places.fields.kitchen]}</span>` 
-                            : ''}
-                        ${place[config.places.fields.vibe] ? 
-                            `<span class="place-tag">${place[config.places.fields.vibe]}</span>` 
-                            : ''}
-                        ${place[config.places.fields.location] ? 
-                            `<span class="place-tag">${place[config.places.fields.location]}</span>` 
+        placesList.innerHTML = data.map((place, index) => {
+            // Рассчитываем расстояние, если есть геолокация
+            let distanceTag = '';
+            if (userLocation) {
+                const distance = calculateDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    place.location.coordinates[1],
+                    place.location.coordinates[0]
+                );
+                distanceTag = `<span class="place-tag">${formatDistance(distance)}</span>`;
+            }
+
+            return `
+                <div class="place-card" data-place-index="${index}">
+                    ${place[config.places.fields.placephotos] ? 
+                        `<img src="${place[config.places.fields.placephotos]}" alt="${place[config.places.fields.name]}" class="place-photo">` 
+                        : ''}
+                    <div class="place-content">
+                        <h3 class="place-name">${place[config.places.fields.name]}</h3>
+                        <div class="place-info">
+                            ${place[config.places.fields.type] ? 
+                                `<span class="place-tag">${place[config.places.fields.type]}</span>` 
+                                : ''}
+                            ${place[config.places.fields.kitchen] ? 
+                                `<span class="place-tag">${place[config.places.fields.kitchen]}</span>` 
+                                : ''}
+                            ${place[config.places.fields.vibe] ? 
+                                `<span class="place-tag">${place[config.places.fields.vibe]}</span>` 
+                                : ''}
+                            ${place[config.places.fields.location] ? 
+                                `<span class="place-tag">${place[config.places.fields.location]}</span>` 
+                                : ''}
+                            ${distanceTag}
+                        </div>
+                        ${place[config.places.fields.review] ? 
+                            `<p class="place-review">${place[config.places.fields.review]}</p>` 
                             : ''}
                     </div>
-                    ${place[config.places.fields.review] ? 
-                        `<p class="place-review">${place[config.places.fields.review]}</p>` 
-                        : ''}
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         // Добавляем обработчики клика
         document.querySelectorAll('.place-card').forEach(card => {

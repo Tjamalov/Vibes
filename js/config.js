@@ -13,7 +13,6 @@ const config = {
     // Настройки для работы с местами
     places: {
         table: 'meal_places',
-        limit: 20,
         fields: {
             name: 'name',
             review: 'revew',
