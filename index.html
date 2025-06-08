@@ -12,14 +12,13 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Подключаем Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Подключаем Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- Подключаем Supabase -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="app">
-        <!-- Кнопка геолокации -->
-        <button class="geo-button" id="geoButton">Гео</button>
-
         <!-- Навигация -->
         <nav class="nav">
             <button class="nav-item active" data-page="food">Еда</button>
@@ -31,9 +30,12 @@
         <main class="content">
             <!-- Страница Еда -->
             <section id="food" class="page active">
-                <h1>Еда</h1>
-                <div class="places-list">
-                    <!-- Здесь будет список мест -->
+                <div class="content">
+                    <div class="header">
+                        <h1>Еда</h1>
+                        <span class="material-icons" id="geoButton" style="font-size: 24px; color: black; cursor: pointer;">my_location</span>
+                    </div>
+                    <div class="places-list"></div>
                 </div>
             </section>
 

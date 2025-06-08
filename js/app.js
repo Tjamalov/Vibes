@@ -3,10 +3,11 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 // Инициализация компонентов
+console.log('Initializing PlaceDetails');
 const placeDetails = new PlaceDetails();
+console.log('PlaceDetails instance:', placeDetails);
 
 // Глобальные переменные
-let userLocation = null;
 let selectedVibe = null;
 let allPlaces = [];
 
@@ -17,7 +18,7 @@ async function getLocation() {
             navigator.geolocation.getCurrentPosition(resolve, reject);
         });
 
-        userLocation = {
+        window.userLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
         };
@@ -27,14 +28,14 @@ async function getLocation() {
             // Сортируем места по расстоянию
             allPlaces.sort((a, b) => {
                 const distA = calculateDistance(
-                    userLocation.lat,
-                    userLocation.lng,
+                    window.userLocation.lat,
+                    window.userLocation.lng,
                     a.location.coordinates[1],
                     a.location.coordinates[0]
                 );
                 const distB = calculateDistance(
-                    userLocation.lat,
-                    userLocation.lng,
+                    window.userLocation.lat,
+                    window.userLocation.lng,
                     b.location.coordinates[1],
                     b.location.coordinates[0]
                 );
@@ -114,17 +115,17 @@ async function loadPlaces() {
         allPlaces = data;
         
         // Сортируем места по расстоянию, если есть геолокация
-        if (userLocation) {
+        if (window.userLocation) {
             allPlaces.sort((a, b) => {
                 const distA = calculateDistance(
-                    userLocation.lat,
-                    userLocation.lng,
+                    window.userLocation.lat,
+                    window.userLocation.lng,
                     a.location.coordinates[1],
                     a.location.coordinates[0]
                 );
                 const distB = calculateDistance(
-                    userLocation.lat,
-                    userLocation.lng,
+                    window.userLocation.lat,
+                    window.userLocation.lng,
                     b.location.coordinates[1],
                     b.location.coordinates[0]
                 );
@@ -188,6 +189,7 @@ async function loadPlaces() {
 
 // Функция для отображения мест с учетом фильтрации
 function renderPlaces() {
+    console.log('renderPlaces called');
     const placesList = document.querySelector('.places-list');
     
     // Фильтруем места по выбранному вайбу
@@ -198,10 +200,10 @@ function renderPlaces() {
     placesList.innerHTML = filteredPlaces.map((place, index) => {
         // Рассчитываем расстояние, если есть геолокация
         let distanceTag = '';
-        if (userLocation) {
+        if (window.userLocation) {
             const distance = calculateDistance(
-                userLocation.lat,
-                userLocation.lng,
+                window.userLocation.lat,
+                window.userLocation.lng,
                 place.location.coordinates[1],
                 place.location.coordinates[0]
             );
@@ -239,10 +241,14 @@ function renderPlaces() {
     }).join('');
 
     // Добавляем обработчики клика
+    console.log('Adding click handlers to place cards');
     document.querySelectorAll('.place-card').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
+            console.log('Place card clicked:', e.target);
             const index = parseInt(card.dataset.placeIndex);
-            placeDetails.show(allPlaces[index], userLocation);
+            console.log('Place index:', index);
+            console.log('Place data:', allPlaces[index]);
+            placeDetails.show(allPlaces[index], window.userLocation);
         });
     });
 }
