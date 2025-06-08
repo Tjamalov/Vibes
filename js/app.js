@@ -19,7 +19,7 @@ document.querySelectorAll('.nav-item').forEach(button => {
 // Функции для работы с местами
 async function loadPlaces() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(config.places.table)
             .select('*')
             .limit(config.places.limit);
@@ -67,7 +67,7 @@ async function loadPlaces() {
 // Функции для работы с маршрутами
 async function loadRoutes() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(config.routes.table)
             .select('*')
             .limit(config.routes.limit);
