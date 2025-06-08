@@ -3,6 +3,12 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Unbounded', sans-serif;
 }
 
 body {
@@ -124,6 +130,7 @@ h1 {
     color: var(--tg-theme-text-color, #000);
     font-size: 12px;
     margin-right: 4px;
+    margin-bottom: 4px;
 }
 
 .place-tag:last-child {
