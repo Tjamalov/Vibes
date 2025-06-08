@@ -99,6 +99,17 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
     padding: 16px 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.places-list * {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 /* Карточка места */
@@ -132,10 +143,13 @@ body {
 }
 
 .place-name {
+    margin: 0 0 8px 0;
     font-size: 18px;
     font-weight: 600;
-    margin-bottom: 8px;
-    color: #000;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .place-info {
@@ -192,7 +206,7 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 80vh;
+    height: 90vh;
     background: var(--tg-theme-bg-color, #fff);
     border-radius: 20px 20px 0 0;
     overflow: hidden;
