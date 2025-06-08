@@ -29,12 +29,38 @@ async function loadPlaces() {
         const placesList = document.querySelector('.places-list');
         placesList.innerHTML = data.map(place => `
             <div class="place-card">
-                <h3>${place.name}</h3>
-                <p>${place.description}</p>
+                ${place[config.places.fields.photo] ? 
+                    `<img src="${place[config.places.fields.photo]}" alt="${place[config.places.fields.name]}" class="place-photo">` 
+                    : ''}
+                <div class="place-content">
+                    <h3 class="place-name">${place[config.places.fields.name]}</h3>
+                    <div class="place-info">
+                        ${place[config.places.fields.type] ? 
+                            `<span class="place-tag">${place[config.places.fields.type]}</span>` 
+                            : ''}
+                        ${place[config.places.fields.kitchen] ? 
+                            `<span class="place-tag">${place[config.places.fields.kitchen]}</span>` 
+                            : ''}
+                        ${place[config.places.fields.vibe] ? 
+                            `<span class="place-tag">${place[config.places.fields.vibe]}</span>` 
+                            : ''}
+                        ${place[config.places.fields.location] ? 
+                            `<span class="place-tag">${place[config.places.fields.location]}</span>` 
+                            : ''}
+                    </div>
+                    ${place[config.places.fields.review] ? 
+                        `<p class="place-review">${place[config.places.fields.review]}</p>` 
+                        : ''}
+                </div>
             </div>
         `).join('');
     } catch (error) {
         console.error('Error loading places:', error);
+        document.querySelector('.places-list').innerHTML = `
+            <div class="error-message">
+                Ошибка загрузки данных. Пожалуйста, попробуйте позже.
+            </div>
+        `;
     }
 }
 

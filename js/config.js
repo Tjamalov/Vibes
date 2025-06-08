@@ -9,8 +9,17 @@ const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 const config = {
     // Настройки для работы с местами
     places: {
-        table: 'places',
-        limit: 20
+        table: 'meal_places',
+        limit: 20,
+        fields: {
+            name: 'name',
+            review: 'revew',
+            photo: 'placephoto',
+            vibe: 'vibe',
+            type: 'type',
+            location: 'countrycity',
+            kitchen: 'kitchen'
+        }
     },
     // Настройки для работы с маршрутами
     routes: {
