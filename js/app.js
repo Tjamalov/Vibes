@@ -11,6 +11,9 @@ console.log('PlaceDetails instance:', placeDetails);
 let selectedVibe = null;
 let allPlaces = [];
 
+// Запрашиваем геолокацию сразу при загрузке
+getLocation();
+
 // Функция для получения геолокации
 async function getLocation() {
     try {
