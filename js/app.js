@@ -2,11 +2,6 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// Инициализация компонентов
-console.log('Initializing PlaceDetails');
-const placeDetails = new PlaceDetails();
-console.log('PlaceDetails instance:', placeDetails);
-
 // Глобальные переменные
 let selectedVibe = null;
 let allPlaces = [];
@@ -88,19 +83,48 @@ document.getElementById('geoButton').addEventListener('click', getLocation);
 // Инициализация Mapbox
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
-// Управление навигацией
-document.querySelectorAll('.nav-item').forEach(button => {
-    button.addEventListener('click', () => {
-        // Убираем активный класс у всех кнопок и страниц
+// Класс для навигации (таба-бар)
+class Navigation {
+    constructor(rootSelector = '#nav-root') {
+        this.root = document.querySelector(rootSelector);
+        this.tabs = [
+            { key: 'food', label: 'Еда' },
+            { key: 'routes', label: 'Маршруты' },
+            { key: 'profile', label: 'Профиль' }
+        ];
+        this.activeTab = 'food';
+        this.render();
+        this.attachEvents();
+    }
+
+    render() {
+        this.root.innerHTML = this.tabs.map(tab => `
+            <button class=\"nav-item${tab.key === this.activeTab ? ' active' : ''}\" data-page=\"${tab.key}\">${tab.label}</button>
+        `).join('');
+    }
+
+    attachEvents() {
+        this.root.querySelectorAll('.nav-item').forEach(button => {
+            button.addEventListener('click', () => {
+                this.setActiveTab(button.dataset.page);
+            });
+        });
+    }
+
+    setActiveTab(tabKey) {
+        this.activeTab = tabKey;
+        // Обновляем визуальное состояние
+        this.render();
+        this.attachEvents();
+        // Переключаем страницы
         document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-        
-        // Добавляем активный класс выбранной кнопке и странице
-        button.classList.add('active');
-        const pageId = button.dataset.page;
-        document.getElementById(pageId).classList.add('active');
-    });
-});
+        const activeBtn = this.root.querySelector(`[data-page=\"${tabKey}\"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+        const page = document.getElementById(tabKey);
+        if (page) page.classList.add('active');
+    }
+}
 
 // Функции для работы с местами
 async function loadPlaces() {
@@ -297,7 +321,7 @@ function renderPlaces() {
         card.addEventListener('click', (e) => {
             const placeIndex = parseInt(card.dataset.placeIndex);
             const place = allPlaces[placeIndex];
-            placeDetails.show(place);
+            window.placeDetails.show(place);
         });
     });
 }
@@ -326,6 +350,11 @@ async function loadRoutes() {
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing PlaceDetails');
+    window.placeDetails = new PlaceDetails();
+    console.log('PlaceDetails instance:', window.placeDetails);
+    window.navigation = new Navigation();
+
     // Загружаем данные для активной страницы
     const activePage = document.querySelector('.page.active');
     if (activePage.id === 'food') {
