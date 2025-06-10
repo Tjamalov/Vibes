@@ -190,7 +190,61 @@ async function loadPlaces() {
     }
 }
 
-// Функция для отображения мест с учетом фильтрации
+// Класс для карточки места
+class PlaceCard {
+    constructor(place, index, allPlaces, isDistant = false) {
+        this.place = place;
+        this.index = index;
+        this.allPlaces = allPlaces;
+        this.isDistant = isDistant;
+    }
+
+    // Формирует HTML карточки
+    render() {
+        let distanceTag = '';
+        let distance = null;
+        if (window.userLocation) {
+            distance = calculateDistance(
+                window.userLocation.lat,
+                window.userLocation.lng,
+                this.place.location.coordinates[1],
+                this.place.location.coordinates[0]
+            );
+            distanceTag = `<span class=\"place-tag\">${formatDistance(distance)}</span>`;
+        }
+        const distantClass = this.isDistant ? ' distant' : '';
+        return `
+            <div class=\"place-card${distantClass}\" data-place-index=\"${this.index}\">
+                ${this.place[config.places.fields.placephotos] ? 
+                    `<img src=\"${this.place[config.places.fields.placephotos]}\" alt=\"${this.place[config.places.fields.name]}\" class=\"place-photo\">` 
+                    : ''}
+                <div class=\"place-content\">
+                    <h3 class=\"place-name\">${this.place[config.places.fields.name]}</h3>
+                    <div class=\"place-info\">
+                        ${this.place[config.places.fields.type] ? 
+                            `<span class=\"place-tag\">${this.place[config.places.fields.type]}</span>` 
+                            : ''}
+                        ${this.place[config.places.fields.kitchen] ? 
+                            `<span class=\"place-tag\">${this.place[config.places.fields.kitchen]}</span>` 
+                            : ''}
+                        ${this.place[config.places.fields.vibe] ? 
+                            `<span class=\"place-tag\" data-vibe>${this.place[config.places.fields.vibe]}</span>` 
+                            : ''}
+                        ${this.place[config.places.fields.location] ? 
+                            `<span class=\"place-tag\">${this.place[config.places.fields.location]}</span>` 
+                            : ''}
+                        ${distanceTag}
+                    </div>
+                    ${this.place[config.places.fields.review] ? 
+                        `<p class=\"place-review\">${this.place[config.places.fields.review]}</p>` 
+                        : ''}
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Функция для отображения мест с учетом фильтрации и расстояния
 function renderPlaces() {
     console.log('renderPlaces called');
     const placesList = document.querySelector('.places-list');
@@ -200,58 +254,50 @@ function renderPlaces() {
         ? allPlaces.filter(place => place[config.places.fields.vibe] === selectedVibe)
         : allPlaces;
 
-    placesList.innerHTML = filteredPlaces.map((place, index) => {
-        // Рассчитываем расстояние, если есть геолокация
-        let distanceTag = '';
+    // Разделяем места по расстоянию
+    const nearPlaces = [];
+    const distantPlaces = [];
+    filteredPlaces.forEach((place) => {
+        let distance = null;
         if (window.userLocation) {
-            const distance = calculateDistance(
+            distance = calculateDistance(
                 window.userLocation.lat,
                 window.userLocation.lng,
                 place.location.coordinates[1],
                 place.location.coordinates[0]
             );
-            distanceTag = `<span class="place-tag">${formatDistance(distance)}</span>`;
         }
+        if (distance === null || distance < 1000) {
+            nearPlaces.push(place);
+        } else if (distance >= 1000 && distance < 20000) {
+            distantPlaces.push(place);
+        }
+        // места с distance >= 20000 не добавляем
+    });
 
-        return `
-            <div class="place-card" data-place-index="${allPlaces.indexOf(place)}">
-                ${place[config.places.fields.placephotos] ? 
-                    `<img src="${place[config.places.fields.placephotos]}" alt="${place[config.places.fields.name]}" class="place-photo">` 
-                    : ''}
-                <div class="place-content">
-                    <h3 class="place-name">${place[config.places.fields.name]}</h3>
-                    <div class="place-info">
-                        ${place[config.places.fields.type] ? 
-                            `<span class="place-tag">${place[config.places.fields.type]}</span>` 
-                            : ''}
-                        ${place[config.places.fields.kitchen] ? 
-                            `<span class="place-tag">${place[config.places.fields.kitchen]}</span>` 
-                            : ''}
-                        ${place[config.places.fields.vibe] ? 
-                            `<span class="place-tag" data-vibe>${place[config.places.fields.vibe]}</span>` 
-                            : ''}
-                        ${place[config.places.fields.location] ? 
-                            `<span class="place-tag">${place[config.places.fields.location]}</span>` 
-                            : ''}
-                        ${distanceTag}
-                    </div>
-                    ${place[config.places.fields.review] ? 
-                        `<p class="place-review">${place[config.places.fields.review]}</p>` 
-                        : ''}
-                </div>
-            </div>
-        `;
+    // Рендерим ближние и дальние места с заголовком для дальних
+    let html = nearPlaces.map((place, index) => {
+        const card = new PlaceCard(place, allPlaces.indexOf(place), allPlaces, false);
+        return card.render();
     }).join('');
 
+    if (distantPlaces.length > 0) {
+        html += `<div class=\"distant-divider\"></div>`;
+        html += `<div class=\"distant-title\">Места дальше 1 км</div>`;
+        html += distantPlaces.map((place, index) => {
+            const card = new PlaceCard(place, allPlaces.indexOf(place), allPlaces, true);
+            return card.render();
+        }).join('');
+    }
+
+    placesList.innerHTML = html;
+
     // Добавляем обработчики клика
-    console.log('Adding click handlers to place cards');
     document.querySelectorAll('.place-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            console.log('Place card clicked:', e.target);
-            const index = parseInt(card.dataset.placeIndex);
-            console.log('Place index:', index);
-            console.log('Place data:', allPlaces[index]);
-            placeDetails.show(allPlaces[index], window.userLocation);
+            const placeIndex = parseInt(card.dataset.placeIndex);
+            const place = allPlaces[placeIndex];
+            placeDetails.show(place);
         });
     });
 }
