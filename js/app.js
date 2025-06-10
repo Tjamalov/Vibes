@@ -355,12 +355,52 @@ async function loadRoutes() {
     }
 }
 
+// Класс для раздела Профиль
+class ProfileSection {
+    constructor(rootSelector = '#profile') {
+        this.root = document.querySelector(rootSelector);
+        this.profileContent = this.root.querySelector('.profile-content');
+        this.render();
+    }
+
+    getTelegramUser() {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+            return window.Telegram.WebApp.initDataUnsafe.user;
+        }
+        return null;
+    }
+
+    render() {
+        const user = this.getTelegramUser();
+        if (user) {
+            this.profileContent.innerHTML = `
+                <div class="profile-block">
+                    <img class="profile-avatar" src="${user.photo_url || ''}" alt="avatar" onerror="this.style.display='none'">
+                    <div class="profile-info">
+                        <div class="profile-name">${user.first_name || ''} ${user.last_name || ''}</div>
+                        <div class="profile-username">@${user.username || ''}</div>
+                        <div class="profile-id">Telegram ID: ${user.id}</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            this.profileContent.innerHTML = `
+                <div class="profile-block">
+                    <div class="profile-noauth">Вы не авторизованы через Telegram.</div>
+                    <a class="profile-tg-btn" href="https://t.me/your_bot?start=webapp" target="_blank">Войти через Telegram</a>
+                </div>
+            `;
+        }
+    }
+}
+
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing PlaceDetails');
     window.placeDetails = new PlaceDetails();
     console.log('PlaceDetails instance:', window.placeDetails);
     window.navigation = new Navigation();
+    window.profileSection = new ProfileSection();
 
     // Загружаем данные для активной страницы
     const activePage = document.querySelector('.page.active');

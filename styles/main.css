@@ -11,12 +11,15 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'Unbounded', sans-serif;
 }
 
+body, .app {
+    background: #fff !important;
+    color: #111 !important;
+}
+
 body {
     margin: 0;
     padding: 0;
     font-family: 'Inter', sans-serif;
-    background: var(--tg-theme-bg-color);
-    color: var(--tg-theme-text-color);
     line-height: 1.6;
 }
 
@@ -46,6 +49,7 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    color: #111 !important;
 }
 
 /* Навигация */
@@ -172,6 +176,7 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    color: #111 !important;
 }
 
 .place-info {
@@ -185,8 +190,8 @@ body {
     display: inline-block;
     padding: 4px 8px;
     border-radius: 8px;
-    background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-    color: var(--tg-theme-text-color, #000);
+    background: #f0f0f0 !important;
+    color: #222 !important;
     font-size: 12px;
     margin-right: 4px;
     margin-bottom: 4px;
@@ -229,7 +234,7 @@ body {
     left: 0;
     width: 100%;
     height: 85vh;
-    background: var(--tg-theme-bg-color, #fff);
+    background: #fff !important;
     border-radius: 20px 20px 0 0;
     overflow: hidden;
     display: flex;
@@ -273,7 +278,7 @@ body {
 .popup-title {
     margin: 0;
     font-size: 24px;
-    color: var(--tg-theme-text-color, #000);
+    color: #111 !important;
 }
 
 .popup-body {
@@ -305,7 +310,7 @@ body {
 
 .popup-description {
     margin-bottom: 16px;
-    color: var(--tg-theme-hint-color, #666);
+    color: #888 !important;
     line-height: 1.5;
 }
 
@@ -368,8 +373,8 @@ body {
     align-items: center;
     padding: 8px 16px;
     border-radius: 20px;
-    background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-    color: var(--tg-theme-text-color, #000);
+    background: #f0f0f0 !important;
+    color: #222 !important;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -414,4 +419,56 @@ body {
 
 #geoButton.geo-rotating {
     animation: rotate360 1s linear infinite;
+}
+
+.profile-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 32px;
+}
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.profile-info {
+    text-align: center;
+}
+.profile-name {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #111 !important;
+}
+.profile-username {
+    color: #888 !important;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+.profile-id {
+    color: #bbb;
+    font-size: 13px;
+}
+.profile-noauth {
+    color: #888 !important;
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+.profile-tg-btn {
+    display: inline-block;
+    background: #229ED9;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 24px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+.profile-tg-btn:hover {
+    background: #1787b8;
 } 
