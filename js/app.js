@@ -11,6 +11,8 @@ getLocation();
 
 // Функция для получения геолокации
 async function getLocation() {
+    const geoBtn = document.getElementById('geoButton');
+    if (geoBtn) geoBtn.classList.add('geo-rotating');
     try {
         const position = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject);
@@ -49,6 +51,8 @@ async function getLocation() {
     } catch (error) {
         console.error('Error getting location:', error);
         alert('Не удалось получить ваше местоположение. Пожалуйста, проверьте настройки геолокации.');
+    } finally {
+        if (geoBtn) geoBtn.classList.remove('geo-rotating');
     }
 }
 
@@ -88,9 +92,9 @@ class Navigation {
     constructor(rootSelector = '#nav-root') {
         this.root = document.querySelector(rootSelector);
         this.tabs = [
-            { key: 'food', label: 'Еда' },
-            { key: 'routes', label: 'Маршруты' },
-            { key: 'profile', label: 'Профиль' }
+            { key: 'food', label: 'Еда', icon: 'lunch_dining' },
+            { key: 'routes', label: 'Маршруты', icon: 'alt_route' },
+            { key: 'profile', label: 'Профиль', icon: 'person' }
         ];
         this.activeTab = 'food';
         this.render();
@@ -99,7 +103,10 @@ class Navigation {
 
     render() {
         this.root.innerHTML = this.tabs.map(tab => `
-            <button class=\"nav-item${tab.key === this.activeTab ? ' active' : ''}\" data-page=\"${tab.key}\">${tab.label}</button>
+            <button class=\"nav-item${tab.key === this.activeTab ? ' active' : ''}\" data-page=\"${tab.key}\">
+                <span class=\"material-icons nav-icon\">${tab.icon}</span>
+                <span class=\"nav-label\">${tab.label}</span>
+            </button>
         `).join('');
     }
 

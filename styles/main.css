@@ -60,6 +60,8 @@ body {
     padding: 12px;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     z-index: 100;
+    height: 88px;
+    border-radius: 16px 16px 0 0;
 }
 
 .nav-item {
@@ -70,6 +72,23 @@ body {
     color: #666;
     font-size: 14px;
     transition: color 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    height: 100%;
+}
+
+.nav-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.nav-label {
+    font-size: 13px;
+    line-height: 1;
 }
 
 .nav-item.active {
@@ -386,4 +405,13 @@ body {
     font-size: 16px;
     color: #111;
     font-weight: 500;
+}
+
+@keyframes rotate360 {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#geoButton.geo-rotating {
+    animation: rotate360 1s linear infinite;
 } 
