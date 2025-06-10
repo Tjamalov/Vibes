@@ -360,7 +360,12 @@ class ProfileSection {
     constructor(rootSelector = '#profile') {
         this.root = document.querySelector(rootSelector);
         this.profileContent = this.root.querySelector('.profile-content');
-        this.init();
+        this.maxAttempts = 10;
+        this.attemptDelay = 1000; // 1 секунда
+        this.attempts = 0;
+        this.profileData = null;
+        this.error = null;
+        this.start();
     }
 
     getTelegramUser() {
@@ -370,68 +375,99 @@ class ProfileSection {
         return null;
     }
 
-    async init() {
+    async start() {
+        // Ждём появления user
         const user = this.getTelegramUser();
-        console.log('[Profile] Telegram user:', user);
-        if (user) {
-            try {
-                // Проверяем, есть ли профиль
-                const { data, error } = await supabaseClient
+        if (!user) {
+            this.attempts++;
+            if (this.attempts < this.maxAttempts) {
+                setTimeout(() => this.start(), this.attemptDelay);
+            } else {
+                this.error = 'Ошибка: не удалось получить данные Telegram.';
+                this.render();
+            }
+            return;
+        }
+        // Пишем профиль в базу
+        try {
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', Number(user.id))
+                .single();
+            if (!data) {
+                const { data: newProfile, error: insertError } = await supabaseClient
                     .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-                console.log('[Profile] Supabase profile fetch:', data, error);
-                if (!data) {
-                    // Если нет — создаём
-                    const { data: newProfile, error: insertError } = await supabaseClient
-                        .from('profiles')
-                        .insert([{
-                            id: user.id,
-                            first_name: user.first_name || '',
-                            last_name: user.last_name || '',
-                            username: user.username || '',
-                            photo_url: user.photo_url || ''
-                        }]);
-                    console.log('[Profile] Supabase profile insert:', newProfile, insertError);
-                } else {
-                    // Если есть — обновляем (на всякий случай)
-                    const { data: updatedProfile, error: updateError } = await supabaseClient
-                        .from('profiles')
-                        .update({
-                            first_name: user.first_name || '',
-                            last_name: user.last_name || '',
-                            username: user.username || '',
-                            photo_url: user.photo_url || ''
-                        })
-                        .eq('id', user.id);
-                    console.log('[Profile] Supabase profile update:', updatedProfile, updateError);
+                    .insert([{
+                        id: Number(user.id),
+                        first_name: user.first_name || '',
+                        last_name: user.last_name || '',
+                        username: user.username || '',
+                        photo_url: user.photo_url || ''
+                    }]);
+                if (insertError) {
+                    throw insertError;
                 }
-            } catch (err) {
-                console.error('[Profile] Supabase error:', err);
+            } else {
+                const { data: updatedProfile, error: updateError } = await supabaseClient
+                    .from('profiles')
+                    .update({
+                        first_name: user.first_name || '',
+                        last_name: user.last_name || '',
+                        username: user.username || '',
+                        photo_url: user.photo_url || ''
+                    })
+                    .eq('id', Number(user.id));
+                if (updateError) {
+                    throw updateError;
+                }
+            }
+            // Загружаем профиль из базы
+            const { data: profile, error: selectError } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', Number(user.id))
+                .single();
+            if (profile) {
+                this.profileData = profile;
+                this.error = null;
+            } else {
+                this.error = 'Ошибка: профиль не найден в базе.';
+            }
+        } catch (err) {
+            this.attempts++;
+            if (this.attempts < this.maxAttempts) {
+                setTimeout(() => this.start(), this.attemptDelay);
+                return;
+            } else {
+                this.error = 'Ошибка при работе с базой: ' + (err.message || err);
             }
         }
         this.render();
     }
 
     render() {
-        const user = this.getTelegramUser();
+        if (this.error) {
+            this.profileContent.innerHTML = `<div class="profile-block"><div class="profile-noauth">${this.error}</div></div>`;
+            return;
+        }
+        const user = this.profileData;
         if (user) {
             this.profileContent.innerHTML = `
-                <div class=\"profile-block\">
-                    <img class=\"profile-avatar\" src=\"${user.photo_url || ''}\" alt=\"avatar\" onerror=\"this.style.display='none'\">
-                    <div class=\"profile-info\">
-                        <div class=\"profile-name\">${user.first_name || ''} ${user.last_name || ''}</div>
-                        <div class=\"profile-username\">@${user.username || ''}</div>
-                        <div class=\"profile-id\">Telegram ID: ${user.id}</div>
+                <div class="profile-block">
+                    <img class="profile-avatar" src="${user.photo_url || ''}" alt="avatar" onerror="this.style.display='none'">
+                    <div class="profile-info">
+                        <div class="profile-name">${user.first_name || ''} ${user.last_name || ''}</div>
+                        <div class="profile-username">@${user.username || ''}</div>
+                        <div class="profile-id">Telegram ID: ${user.id}</div>
                     </div>
                 </div>
             `;
         } else {
             this.profileContent.innerHTML = `
-                <div class=\"profile-block\">
-                    <div class=\"profile-noauth\">Вы не авторизованы через Telegram.</div>
-                    <a class=\"profile-tg-btn\" href=\"https://t.me/thisisvibes_bot?start=webapp\" target=\"_blank\">Войти через Telegram</a>
+                <div class="profile-block">
+                    <div class="profile-noauth">Вы не авторизованы через Telegram.</div>
+                    <a class="profile-tg-btn" href="https://t.me/thisisvibes_bot?start=webapp" target="_blank">Войти через Telegram</a>
                 </div>
             `;
         }
