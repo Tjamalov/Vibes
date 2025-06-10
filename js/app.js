@@ -360,7 +360,7 @@ class ProfileSection {
     constructor(rootSelector = '#profile') {
         this.root = document.querySelector(rootSelector);
         this.profileContent = this.root.querySelector('.profile-content');
-        this.render();
+        this.init();
     }
 
     getTelegramUser() {
@@ -368,6 +368,27 @@ class ProfileSection {
             return window.Telegram.WebApp.initDataUnsafe.user;
         }
         return null;
+    }
+
+    async init() {
+        const user = this.getTelegramUser();
+        console.log('[Profile] Telegram user:', user);
+        if (user) {
+            // Здесь будет логика работы с Supabase
+            try {
+                // Пример запроса к Supabase (псевдокод)
+                // const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+                // console.log('[Profile] Supabase profile fetch:', data, error);
+                // if (!data) {
+                //     // Пример создания профиля
+                //     const { data: newProfile, error: insertError } = await supabaseClient.from('profiles').insert([{ ...user }]);
+                //     console.log('[Profile] Supabase profile insert:', newProfile, insertError);
+                // }
+            } catch (err) {
+                console.error('[Profile] Supabase error:', err);
+            }
+        }
+        this.render();
     }
 
     render() {
