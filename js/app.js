@@ -374,16 +374,39 @@ class ProfileSection {
         const user = this.getTelegramUser();
         console.log('[Profile] Telegram user:', user);
         if (user) {
-            // Здесь будет логика работы с Supabase
             try {
-                // Пример запроса к Supabase (псевдокод)
-                // const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-                // console.log('[Profile] Supabase profile fetch:', data, error);
-                // if (!data) {
-                //     // Пример создания профиля
-                //     const { data: newProfile, error: insertError } = await supabaseClient.from('profiles').insert([{ ...user }]);
-                //     console.log('[Profile] Supabase profile insert:', newProfile, insertError);
-                // }
+                // Проверяем, есть ли профиль
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                console.log('[Profile] Supabase profile fetch:', data, error);
+                if (!data) {
+                    // Если нет — создаём
+                    const { data: newProfile, error: insertError } = await supabaseClient
+                        .from('profiles')
+                        .insert([{
+                            id: user.id,
+                            first_name: user.first_name || '',
+                            last_name: user.last_name || '',
+                            username: user.username || '',
+                            photo_url: user.photo_url || ''
+                        }]);
+                    console.log('[Profile] Supabase profile insert:', newProfile, insertError);
+                } else {
+                    // Если есть — обновляем (на всякий случай)
+                    const { data: updatedProfile, error: updateError } = await supabaseClient
+                        .from('profiles')
+                        .update({
+                            first_name: user.first_name || '',
+                            last_name: user.last_name || '',
+                            username: user.username || '',
+                            photo_url: user.photo_url || ''
+                        })
+                        .eq('id', user.id);
+                    console.log('[Profile] Supabase profile update:', updatedProfile, updateError);
+                }
             } catch (err) {
                 console.error('[Profile] Supabase error:', err);
             }
@@ -395,20 +418,20 @@ class ProfileSection {
         const user = this.getTelegramUser();
         if (user) {
             this.profileContent.innerHTML = `
-                <div class="profile-block">
-                    <img class="profile-avatar" src="${user.photo_url || ''}" alt="avatar" onerror="this.style.display='none'">
-                    <div class="profile-info">
-                        <div class="profile-name">${user.first_name || ''} ${user.last_name || ''}</div>
-                        <div class="profile-username">@${user.username || ''}</div>
-                        <div class="profile-id">Telegram ID: ${user.id}</div>
+                <div class=\"profile-block\">
+                    <img class=\"profile-avatar\" src=\"${user.photo_url || ''}\" alt=\"avatar\" onerror=\"this.style.display='none'\">
+                    <div class=\"profile-info\">
+                        <div class=\"profile-name\">${user.first_name || ''} ${user.last_name || ''}</div>
+                        <div class=\"profile-username\">@${user.username || ''}</div>
+                        <div class=\"profile-id\">Telegram ID: ${user.id}</div>
                     </div>
                 </div>
             `;
         } else {
             this.profileContent.innerHTML = `
-                <div class="profile-block">
-                    <div class="profile-noauth">Вы не авторизованы через Telegram.</div>
-                    <a class="profile-tg-btn" href="https://t.me/your_bot?start=webapp" target="_blank">Войти через Telegram</a>
+                <div class=\"profile-block\">
+                    <div class=\"profile-noauth\">Вы не авторизованы через Telegram.</div>
+                    <a class=\"profile-tg-btn\" href=\"https://t.me/thisisvibes_bot?start=webapp\" target=\"_blank\">Войти через Telegram</a>
                 </div>
             `;
         }
